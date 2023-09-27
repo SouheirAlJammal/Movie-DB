@@ -61,6 +61,12 @@ app.get('/movies/read/:order?', (req, res) => {
 })
 
 
+//get movie by id
+app.get('/movies/read/id/:id', (req, res) => {
+    if (req.params.id < 1 || req.params.id > movies.length) { res.status(404).json({ status: 404, error: true, data: `the movie ${req.params.id} does not exist` }) }
+    else { res.status(200).json({ status: 200, data: movies.filter(movie => movie == movies[req.params.id - 1]) }) }
+})
+
 
 //route to update movie
 app.get('/movies/update',(req,res)=>{
