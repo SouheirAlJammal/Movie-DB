@@ -89,8 +89,14 @@ app.get('/movies/update',(req,res)=>{
 
 
 //route to delete movie
-app.get('/movies/delete',(req,res)=>{
-    res.status(200).send('Done')
+//route to delete movie by id
+app.get('/movies/delete/:id', (req, res) => {
+    if (req.params.id < 1 || req.params.id > movies.length) { res.status(404).json({ status: 404, error: true, data: `the movie ${req.params.id} does not exist` }) }
+    else {
+        movies.splice(req.params.id - 1, 1);
+        res.status(200).json({ status: 200, data: movies })
+    }
 })
+
 
 app.listen(3000, () => console.log('this server is listening to 3000 port'));
