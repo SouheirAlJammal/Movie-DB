@@ -43,8 +43,22 @@ app.get('/search', (req, res) => {
 
 
 //route to add movie
-app.get('/movies/create',(req,res)=>{
-    res.status(200).send('Done')
+//route to create movie
+app.get('/movies/add', (req, res) => {
+    let yearDigit = /^\d\d\d\d$/;
+    //title exist and year of 4 digit exist
+    if (req.query.title && (yearDigit).test(req.query.year)) {
+        let newMovie = { title: req.query.title, year: req.query.year, rating: (req.query.rating || 4) };
+        movies.push(newMovie);
+        res.status(200).json({ status: 200, data: movies });
+    }
+    //title or year missed or not of 4 digit
+    else res.status(403).json({
+        status: 403,
+        error: true,
+        message: 'you cannot create a movie without providing a title and a year'
+    })
+
 })
 
 
