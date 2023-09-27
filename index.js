@@ -44,7 +44,7 @@ app.get('/search', (req, res) => {
 
 //route to add movie
 //route to create movie
-app.get('/movies/add', (req, res) => {
+app.post('/movies', (req, res) => {
     let yearDigit = /^\d\d\d\d$/;
     //title exist and year of 4 digit exist
     if (req.query.title && (yearDigit).test(req.query.year)) {
@@ -65,7 +65,7 @@ app.get('/movies/add', (req, res) => {
 //route to get movie
 //get movie by default or by order of date , rate , title
 
-app.get('/movies/read/:order?', (req, res) => {
+app.get('/movies/:order?', (req, res) => {
     switch (req.params.order) {
         case 'by-date': res.status(200).json({ status: 200, data: movies.sort((a, b) => (a.year) - (b.year)) }); break;
         case 'by-rating': res.status(200).json({ status: 200, data: movies.sort((a, b) => (a.rating) - (b.rating)) }); break;
@@ -76,14 +76,14 @@ app.get('/movies/read/:order?', (req, res) => {
 
 
 //get movie by id
-app.get('/movies/read/id/:id', (req, res) => {
+app.get('/movies/id/:id', (req, res) => {
     if (req.params.id < 1 || req.params.id > movies.length) { res.status(404).json({ status: 404, error: true, data: `the movie ${req.params.id} does not exist` }) }
     else { res.status(200).json({ status: 200, data: movies.filter(movie => movie == movies[req.params.id - 1]) }) }
 })
 
 
 //route to update movie
-app.get('/movies/update/:id', (req, res) => {
+app.put('/movies/:id', (req, res) => {
     let selectedMovie = req.params.id
     movies[selectedMovie-1] = {
         title: req.query.title || movies[selectedMovie-1].title,
@@ -96,7 +96,7 @@ app.get('/movies/update/:id', (req, res) => {
 
 //route to delete movie
 //route to delete movie by id
-app.get('/movies/delete/:id', (req, res) => {
+app.delete('/movies/:id', (req, res) => {
     if (req.params.id < 1 || req.params.id > movies.length) { res.status(404).json({ status: 404, error: true, data: `the movie ${req.params.id} does not exist` }) }
     else {
         movies.splice(req.params.id - 1, 1);
