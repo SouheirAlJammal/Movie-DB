@@ -83,8 +83,14 @@ app.get('/movies/read/id/:id', (req, res) => {
 
 
 //route to update movie
-app.get('/movies/update',(req,res)=>{
-    res.status(200).send('Done')
+app.get('/movies/update/:id', (req, res) => {
+    let selectedMovie = req.params.id
+    movies[selectedMovie-1] = {
+        title: req.query.title || movies[selectedMovie-1].title,
+        year: req.query.year || movies[selectedMovie-1].year,
+        rating: (req.query.rating || movies[selectedMovie-1].rating)
+    }
+    res.status(200).json({ status: 200, data: movies })
 })
 
 
