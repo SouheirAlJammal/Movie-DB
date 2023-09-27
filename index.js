@@ -49,9 +49,17 @@ app.get('/movies/create',(req,res)=>{
 
 
 //route to get movie
-app.get('/movies/read',(req,res)=>{
-    res.status(200).json({status:200, data: movies})
+//get movie by default or by order of date , rate , title
+
+app.get('/movies/read/:order?', (req, res) => {
+    switch (req.params.order) {
+        case 'by-date': res.status(200).json({ status: 200, data: movies.sort((a, b) => (a.year) - (b.year)) }); break;
+        case 'by-rating': res.status(200).json({ status: 200, data: movies.sort((a, b) => (a.rating) - (b.rating)) }); break;
+        case 'by-title': res.status(200).json({ status: 200, data: movies.sort((a, b) => (a.title).localeCompare(b.title)) }); break;
+        case undefined: res.status(200).json({ status: 200, data: movies}); break;
+    }
 })
+
 
 
 //route to update movie
