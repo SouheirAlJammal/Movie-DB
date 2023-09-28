@@ -1,108 +1,144 @@
 const express = require('express');
 app = express();
+const mongoose = require('mongoose')
+require('dotenv').config();
+const mongoDB = process.env.MD_URI;
 
 
-const movies = [
-    { title: 'Jaws', year: 1975, rating: 8 },
-    { title: 'Avatar', year: 2009, rating: 7.8 },
-    { title: 'Brazil', year: 1985, rating: 8 },
-    { title: 'الإرهاب والكباب', year: 1992, rating: 6.2 }
-]
+//schema of data in mongoDB
+movieSchema = new mongoose.Schema({
+    title: {
+        type: String,
+        require: true
+    },
+    year: {
+        type: Number,
+        require: true,
+        validate: {
+            validator: value => /^\d{4}$/.test(value),
+            message: 'year should be of 4 digit number'
+        }
+    },
+    rating: {
+        type: Number,
+        require: true,
+        default: 4,
+        min: 0,
+        max: 10
+    },
+
+})
+
+//model of schema
+const Movie = mongoose.model('Movie', movieSchema)
+
+app.use(express.json());
 
 app.get('/', (req, res) => {
     res.send('Ok!')
 })
 
 
-//routes step3
-app.get('/test', (req, res) => {
-    res.status(200).json({ status: 200, message: "ok" })
-})
-
-app.get('/time', (req, res) => {
-    let currentTime = new Date();
-    let hours = currentTime.getHours()
-    let minutes = currentTime.getMinutes()
-    res.status(200).json({ status: 200, message: `${hours}:${minutes}` })
-})
-
-
-//route to hello page
-app.get('/hello/:id?', (req, res) => {
-    res.status(200).json({ status: 200, message: (req.params.id) ? `Hello,${req.params.id}` : `Hello!` })
-})
-
-
-//route for search
-app.get('/search', (req, res) => {
-    (req.query.s != undefined)
-        ? res.status(200).json({ status: 200, message: "ok", data: req.query.s })
-        : res.status(500).json({ status: 500, error: true, message: "you have to provide a search" })
-})
-
-
-
 //route to add movie
 //route to create movie
 app.post('/movies', (req, res) => {
-    let yearDigit = /^\d\d\d\d$/;
-    //title exist and year of 4 digit exist
-    if (req.query.title && (yearDigit).test(req.query.year)) {
-        let newMovie = { title: req.query.title, year: req.query.year, rating: (req.query.rating || 4) };
-        movies.push(newMovie);
-        res.status(200).json({ status: 200, data: movies });
-    }
-    //title or year missed or not of 4 digit
-    else res.status(403).json({
-        status: 403,
-        error: true,
-        message: 'you cannot create a movie without providing a title and a year'
-    })
+    let newMovie = new Movie(
+        {
+            title: req.body.title,
+            year: req.body.year,
+            rating: req.body.rating
+        });
+    //save newMovie in data
+    newMovie.save()
+        .then(() => {
+            res.status(200).json({ status: 200, data: newMovie });
+        })
+        .catch(error => res.status(403).json({
+            status: 403,
+            message: 'failed to create a movie',
+            error
+
+        }));
 
 })
 
 
-//route to get movie
 //get movie by default or by order of date , rate , title
 
-app.get('/movies/:order?', (req, res) => {
-    switch (req.params.order) {
-        case 'by-date': res.status(200).json({ status: 200, data: movies.sort((a, b) => (a.year) - (b.year)) }); break;
-        case 'by-rating': res.status(200).json({ status: 200, data: movies.sort((a, b) => (a.rating) - (b.rating)) }); break;
-        case 'by-title': res.status(200).json({ status: 200, data: movies.sort((a, b) => (a.title).localeCompare(b.title)) }); break;
-        case undefined: res.status(200).json({ status: 200, data: movies}); break;
-    }
+//get all movies
+app.get('/movies', (req, res) => {
+
+    Movie.find({})
+        .then(movies => res.status(200).json({ status: 200, data: movies }))
+        .catch(error => {
+            res.status(404).json({ message: 'data not found', error })
+        })
 })
 
+
+//get movie by title
+app.get('/movies/by-title', (req, res) => {
+
+    Movie.find({}).sort({ title: 1 })
+        .then(movies => res.status(200).json({ status: 200, data: movies }))
+        .catch(error => {
+            res.status(404).json({ message: 'data not found', error })
+        })
+})
+
+//get movie by date
+app.get('/movies/by-date', (req, res) => {
+
+    Movie.find({}).sort({ year: 1 })
+        .then(movies => res.status(200).json({ status: 200, data: movies }))
+        .catch(error => {
+            res.status(404).json({ message: 'data not found', error })
+        })
+})
+
+//get movie by rating
+app.get('/movies/by-rating', (req, res) => {
+
+    Movie.find({}).sort({ rating: 1 })
+        .then(movies => res.status(200).json({ status: 200, data: movies }))
+        .catch(error => {
+            res.status(404).json({ message: 'data not found', error })
+        })
+})
 
 //get movie by id
 app.get('/movies/id/:id', (req, res) => {
-    if (req.params.id < 1 || req.params.id > movies.length) { res.status(404).json({ status: 404, error: true, data: `the movie ${req.params.id} does not exist` }) }
-    else { res.status(200).json({ status: 200, data: movies.filter(movie => movie == movies[req.params.id - 1]) }) }
+    const movieId = req.params.id;
+    Movie.findById(movieId)
+        .then(movie => res.status(200).json({ status: 200, data: movie }))
+        .catch(error => res.status(404).json({ status: 404, error }))
+
 })
 
 
 //route to update movie
 app.put('/movies/:id', (req, res) => {
-    let selectedMovie = req.params.id
-    movies[selectedMovie-1] = {
-        title: req.query.title || movies[selectedMovie-1].title,
-        year: req.query.year || movies[selectedMovie-1].year,
-        rating: (req.query.rating || movies[selectedMovie-1].rating)
-    }
-    res.status(200).json({ status: 200, data: movies })
+    let idMovie = req.params.id
+    Movie.findByIdAndUpdate(idMovie, req.body, { new: true })
+        .then(movie => res.status(200).json({ status: 200, data: movie }))
+        .catch(error => res.status(500).json({ status: 500, error }))
 })
 
 
 //route to delete movie
 //route to delete movie by id
 app.delete('/movies/:id', (req, res) => {
-    if (req.params.id < 1 || req.params.id > movies.length) { res.status(404).json({ status: 404, error: true, data: `the movie ${req.params.id} does not exist` }) }
-    else {
-        movies.splice(req.params.id - 1, 1);
-        res.status(200).json({ status: 200, data: movies })
-    }
+    const movieId = req.params.id
+    Movie.findByIdAndDelete(movieId)
+        .then(() => res.status(200).json({ status: 200, message: 'movie deleted successfully' }))
+        .catch(error => res.status(500).json({ status: 404, error }))
 })
 
 
-app.listen(3000, () => console.log('this server is listening to 3000 port'));
+mongoose.connect(mongoDB)
+    .then(() => {
+        app.listen(3000, () => console.log('this server is listening to 3000 port'));
+    })
+    .catch((error) => {
+        console.log(error);
+    })
