@@ -41,7 +41,7 @@ app.get('/', (req, res) => {
 
 //route to add movie
 //route to create movie
-app.post('/movies', (req, res) => {
+app.post('/movies',permession, (req, res) => {
     let newMovie = new Movie(
         {
             title: req.body.title,
@@ -117,7 +117,7 @@ app.get('/movies/id/:id', (req, res) => {
 
 
 //route to update movie
-app.put('/movies/:id', (req, res) => {
+app.put('/movies/:id',permession, (req, res) => {
     let idMovie = req.params.id
     Movie.findByIdAndUpdate(idMovie, req.body, { new: true })
         .then(movie => res.status(200).json({ status: 200, data: movie }))
