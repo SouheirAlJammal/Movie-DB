@@ -127,12 +127,22 @@ app.put('/movies/:id', (req, res) => {
 
 //route to delete movie
 //route to delete movie by id
-app.delete('/movies/:id', (req, res) => {
+app.delete('/movies/:id',permession, (req, res) => {
     const movieId = req.params.id
     Movie.findByIdAndDelete(movieId)
         .then(() => res.status(200).json({ status: 200, message: 'movie deleted successfully' }))
         .catch(error => res.status(500).json({ status: 404, error }))
 })
+
+
+
+//authentication function 
+const users = [{ username: 'John', password: '1234' }, { username: 'Jane', password: '5678' }];
+function permession(req, res, next) {
+    const { username, password } = req.headers;
+    const testUser = users.find(user => user.username === username && user.password === password)
+        (testUser) ? next() : res.status(401).json({ message: 'not authenticated' })
+}
 
 
 mongoose.connect(mongoDB)
